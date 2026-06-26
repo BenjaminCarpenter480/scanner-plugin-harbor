@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 
+
+	harborTypes "github.com/goharbor/harbor/src/pkg/scan/vuln/report.go"	
 	v1alpha1 "github.com/project-copacetic/copacetic/pkg/types/v1alpha1"
 )
 
@@ -17,12 +19,12 @@ func parseHarborReport(file string) (*HarborReport, error) {
 		return nil, err
 	}
 
-	var harbor HarborReport
+	var harborReport harborTypes.Report
 	if err = json.Unmarshal(data, &harbor); err != nil {
 		return nil, err
 	}
 
-	return &harbor, nil
+	return &harborReport, nil
 }
 
 func newHarborParser() *HarborParser {
@@ -36,32 +38,38 @@ func (k *HarborParser) parse(file string) (*v1alpha1.UpdateManifest, error) {
 		return nil, err
 	}
 
+	if report["application/vnd.security.vulnerability.report; version=1.1"].Vulnerabilities == nil {
+		return nil, fmt.Errorf("no vulnerabilities found in the report or report is not in the expected format")
+	}
+
 	// Create the standardized report
 	updates := v1alpha1.UpdateManifest{
 		APIVersion: v1alpha1.APIVersion,
 		Metadata: v1alpha1.Metadata{
+			// Modify types to include harbor types?
 			OS: v1alpha1.OS{
-				Type: report.OSType,
-				Version: report.OSVersion,
+				Type: "Unknown",
+				Version: "Unknown",
 			},
 			Config: v1alpha1.Config{
-				Arch: report.Arch,
+			Arch: "Unknown",
 			},
 		},
 	}
 
 	// Convert the harbor report to the standardized report
-	for i := range report.Packages {
-		pkgs := &report.Packages[i]
-		if pkgs.FixedVersion != "" {
+	for vuln_index, vuln := range report.vulnerabilities {
+		pkg_name := &report.vulnerabilities[vuln_index].package
+		if vuln.fix_version != "" {
 			updates.Updates = append(updates.Updates, v1alpha1.UpdatePackage{
-				Name: pkgs.Name,
-				InstalledVersion: pkgs.InstalledVersion,
-				FixedVersion: pkgs.FixedVersion,
-				VulnerabilityID: pkgs.VulnerabilityID,
+				Name: pkg_name,
+				InstalledVersion: vuln.version,
+				FixedVersion: vuln.fix_version,
+				VulnerabilityID: vuln.id
 			})
 		}
 	}
+
 	return &updates, nil
 }
 
