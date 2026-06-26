@@ -8,30 +8,30 @@ import (
 	v1alpha1 "github.com/project-copacetic/copacetic/pkg/types/v1alpha1"
 )
 
-type FakeParser struct{}
+type HarborParser struct{}
 
-// parseFakeReport parses a fake report from a file
-func parseFakeReport(file string) (*FakeReport, error) {
+// parseHarborReport parses a harbor report from a file
+func parseHarborReport(file string) (*HarborReport, error) {
 	data, err := os.ReadFile(file)
 	if err != nil {
 		return nil, err
 	}
 
-	var fake FakeReport
-	if err = json.Unmarshal(data, &fake); err != nil {
+	var harbor HarborReport
+	if err = json.Unmarshal(data, &harbor); err != nil {
 		return nil, err
 	}
 
-	return &fake, nil
+	return &harbor, nil
 }
 
-func newFakeParser() *FakeParser {
-	return &FakeParser{}
+func newHarborParser() *HarborParser {
+	return &HarborParser{}
 }
 
-func (k *FakeParser) parse(file string) (*v1alpha1.UpdateManifest, error) {
-	// Parse the fake report
-	report, err := parseFakeReport(file)
+func (k *HarborParser) parse(file string) (*v1alpha1.UpdateManifest, error) {
+	// Parse the harbor report
+	report, err := parseHarborReport(file)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +50,7 @@ func (k *FakeParser) parse(file string) (*v1alpha1.UpdateManifest, error) {
 		},
 	}
 
-	// Convert the fake report to the standardized report
+	// Convert the harbor report to the standardized report
 	for i := range report.Packages {
 		pkgs := &report.Packages[i]
 		if pkgs.FixedVersion != "" {
@@ -72,12 +72,12 @@ func main() {
 	}
 
 	// Initialize the parser
-	fakeParser := newFakeParser()
+	harborParser := newHarborParser()
 
 	// Get the image report from command line
 	imageReport := os.Args[1]
 
-	report, err := fakeParser.parse(imageReport)
+	report, err := harborParser.parse(imageReport)
 	if err != nil {
 		fmt.Printf("error parsing report: %v\n", err)
 		os.Exit(1)

@@ -1,5 +1,5 @@
 {
-    "OSType": "FakeOS",
+    "OSType": "harborOS",
     "OSVersion": "42",
     "Arch": "amd64",
     "Packages": [

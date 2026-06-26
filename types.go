@@ -1,16 +1,16 @@
-// Type definitions for fake scanner report
+// Type definitions for harbor scanner report
 package main
 
-// FakeReport contains OS, Arch, and Package information
-type FakeReport struct {
+// harborReport contains OS, Arch, and Package information
+type harborReport struct {
 	OSType    string
 	OSVersion string
 	Arch      string
-	Packages  []FakePackage
+	Packages  []harborPackage
 }
 
-// FakePackage contains package and vulnerability information
-type FakePackage struct {
+// harborPackage contains package and vulnerability information
+type harborPackage struct {
 	Name             string
 	InstalledVersion string
 	FixedVersion     string

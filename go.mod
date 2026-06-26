@@ -1,4 +1,4 @@
-module github.com/project-copacetic/scanner-plugin-template
+module github.com/project-copacetic/scanner-plugin-harbor
 
 go 1.21
 

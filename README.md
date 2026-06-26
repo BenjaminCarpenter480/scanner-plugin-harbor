@@ -10,7 +10,7 @@ These instructions are for developing a new scanner plugin for [Copacetic](https
 
 1. Clone this repo
 2. Rename the `scanner-plugin-template` repo to the name of your plugin
-3. Update applicable types for [`FakeReport`](types.go) to match your scanner's structure
+3. Update applicable types for [`harborReport`](types.go) to match your scanner's structure
 4. Update [`parse`](main.go) to parse your scanner's report format accordingly
 5. Update `CLI_BINARY` in the [`Makefile`](Makefile) to match your scanner's CLI binary name (resulting binary must be prefixed with `copa-`)
 5. Update this [`README.md`](README.md) to match your plugin's usage
@@ -32,24 +32,24 @@ This is an example development workflow for this template.
 
 ```shell
 # clone this repo
-git clone https://github.com/project-copacetic/scanner-plugin-template.git
+git clone https://github.com/project-copacetic/scanner-plugin-harbor.git
 
 # change directory to the repo
-cd scanner-plugin-template
+cd scanner-plugin-harbor
 
-# build the copa-fake binary
+# build the copa-harbor binary
 make
 
-# add copa-fake binary to PATH
+# add copa-harbor binary to PATH
 export PATH=$PATH:dist/linux_amd64/release/
 
 # test plugin with example config
-copa-fake testdata/fake_report.json
+copa-harbor testdata/harbor_report.json
 # this will print the report in JSON format
-# {"apiVersion":"v1alpha1","metadata":{"os":{"type":"FakeOS","version":"42"},"config":{"arch":"amd64"}},"updates":[{"name":"foo","installedVersion":"1.0.0","fixedVersion":"1.0.1","vulnerabilityID":"VULN001"},{"name":"bar","installedVersion":"2.0.0","fixedVersion":"2.0.1","vulnerabilityID":"VULN002"}]}
+# {"apiVersion":"v1alpha1","metadata":{"os":{"type":"harborOS","version":"42"},"config":{"arch":"amd64"}},"updates":[{"name":"foo","installedVersion":"1.0.0","fixedVersion":"1.0.1","vulnerabilityID":"VULN001"},{"name":"bar","installedVersion":"2.0.0","fixedVersion":"2.0.1","vulnerabilityID":"VULN002"}]}
 
-# run copa with the scanner plugin (copa-fake) and the report file
-copa patch -i $IMAGE -r testdata/fake_report.json --scanner fake
+# run copa with the scanner plugin (copa-harbor) and the report file
+copa patch -i $IMAGE -r testdata/harbor_report.json --scanner harbor
 # this is for illustration purposes only
-# it will fail with "Error: unsupported osType FakeOS specified"
+# it will fail with "Error: unsupported osType harborOS specified"
 ```

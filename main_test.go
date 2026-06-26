@@ -7,24 +7,24 @@ import (
 	v1alpha1 "github.com/project-copacetic/copacetic/pkg/types/v1alpha1"
 )
 
-func Test_parseFakeReport(t *testing.T) {
+func Test_parseharborReport(t *testing.T) {
 	type args struct {
 		file string
 	}
 	tests := []struct {
 		name    string
 		args    args
-		want    *FakeReport
+		want    *harborReport
 		wantErr bool
 	}{
 		{
 			name: "valid report",
-			args: args{file: "testdata/fake_report.json"},
-			want: &FakeReport{
-				OSType:    "FakeOS",
+			args: args{file: "testdata/harbor_report.json"},
+			want: &harborReport{
+				OSType:    "harborOS",
 				OSVersion: "42",
 				Arch:      "amd64",
-				Packages: []FakePackage{
+				Packages: []harborPackage{
 					{
 						Name:             "foo",
 						InstalledVersion: "1.0.0",
@@ -62,57 +62,57 @@ func Test_parseFakeReport(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := parseFakeReport(tt.args.file)
+			got, err := parseharborReport(tt.args.file)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("parseFakeReport() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("parseharborReport() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("parseFakeReport() = %v, want %v", got, tt.want)
+				t.Errorf("parseharborReport() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestNewFakeParser(t *testing.T) {
+func TestNewharborParser(t *testing.T) {
 	tests := []struct {
 		name string
-		want *FakeParser
+		want *harborParser
 	}{
 		{
 			name: "valid parser",
-			want: &FakeParser{},
+			want: &harborParser{},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := newFakeParser(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewFakeParser() = %v, want %v", got, tt.want)
+			if got := newharborParser(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("NewharborParser() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestFakeParser_Parse(t *testing.T) {
+func TestharborParser_Parse(t *testing.T) {
 	type args struct {
 		file string
 	}
 	tests := []struct {
 		name    string
-		k       *FakeParser
+		k       *harborParser
 		args    args
 		want    *v1alpha1.UpdateManifest
 		wantErr bool
 	}{
 		{
 			name: "valid report",
-			k:    &FakeParser{},
-			args: args{file: "testdata/fake_report.json"},
+			k:    &harborParser{},
+			args: args{file: "testdata/harbor_report.json"},
 			want: &v1alpha1.UpdateManifest{
 				APIVersion: v1alpha1.APIVersion,
 				Metadata: v1alpha1.Metadata{
 					OS: v1alpha1.OS{
-						Type:    "FakeOS",
+						Type:    "harborOS",
 						Version: "42",
 					},
 					Config: v1alpha1.Config{
@@ -138,14 +138,14 @@ func TestFakeParser_Parse(t *testing.T) {
 		},
 		{
 			name:    "invalid file",
-			k:       &FakeParser{},
+			k:       &harborParser{},
 			args:    args{file: "testdata/nonexistent_file.json"},
 			want:    nil,
 			wantErr: true,
 		},
 		{
 			name:    "invalid json",
-			k:       &FakeParser{},
+			k:       &harborParser{},
 			args:    args{file: "testdata/invalid_report.json"},
 			want:    nil,
 			wantErr: true,
@@ -155,11 +155,11 @@ func TestFakeParser_Parse(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := tt.k.parse(tt.args.file)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("FakeParser.Parse() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("harborParser.Parse() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("FakeParser.Parse() = %v, want %v", got, tt.want)
+				t.Errorf("harborParser.Parse() = %v, want %v", got, tt.want)
 			}
 		})
 	}
