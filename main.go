@@ -5,26 +5,36 @@ import (
 	"fmt"
 	"os"
 
-
-	harborTypes "github.com/goharbor/harbor/src/pkg/scan/vuln/report.go"	
 	v1alpha1 "github.com/project-copacetic/copacetic/pkg/types/v1alpha1"
+	"github.com/goharbor/harbor/src/pkg/scan/vuln"
 )
+
+// HarborReportEnvelope wraps the vuln.Report in the API envelope format,
+//  which is a map with the MIME type as the key and the report as the value.
+// This should stop errors if we get different MIME types in the future, as we can just check for the key and extract the report.
+type HarborReportEnvelope map[string]vuln.Report
 
 type HarborParser struct{}
 
-// parseHarborReport parses a harbor report from a file
-func parseHarborReport(file string) (*HarborReport, error) {
+// parseHarborReport parses a harbor report from a file and extracts the Report data
+func parseHarborReport(file string) (*vuln.Report, error) {
 	data, err := os.ReadFile(file)
 	if err != nil {
 		return nil, err
 	}
 
-	var harborReport harborTypes.Report
-	if err = json.Unmarshal(data, &harbor); err != nil {
+	var envelope HarborReportEnvelope
+	if err = json.Unmarshal(data, &envelope); err != nil {
 		return nil, err
 	}
 
-	return &harborReport, nil
+	// Extract the report data from the envelope using the MIME type key
+	reportData, ok := envelope["application/vnd.security.vulnerability.report; version=1.1"]
+	if !ok {
+		return nil, fmt.Errorf("missing report data in envelope with expected MIME type key")
+	}
+
+	return &reportData, nil
 }
 
 func newHarborParser() *HarborParser {
@@ -38,7 +48,7 @@ func (k *HarborParser) parse(file string) (*v1alpha1.UpdateManifest, error) {
 		return nil, err
 	}
 
-	if report["application/vnd.security.vulnerability.report; version=1.1"].Vulnerabilities == nil {
+	if report.Vulnerabilities == nil || len(report.Vulnerabilities) == 0 {
 		return nil, fmt.Errorf("no vulnerabilities found in the report or report is not in the expected format")
 	}
 
@@ -46,26 +56,25 @@ func (k *HarborParser) parse(file string) (*v1alpha1.UpdateManifest, error) {
 	updates := v1alpha1.UpdateManifest{
 		APIVersion: v1alpha1.APIVersion,
 		Metadata: v1alpha1.Metadata{
-			// Modify types to include harbor types?
 			OS: v1alpha1.OS{
-				Type: "Unknown",
+				Type:    "Unknown",
 				Version: "Unknown",
 			},
 			Config: v1alpha1.Config{
-			Arch: "Unknown",
+				Arch: "Unknown",
 			},
 		},
 	}
 
-	// Convert the harbor report to the standardized report
-	for vuln_index, vuln := range report.vulnerabilities {
-		pkg_name := &report.vulnerabilities[vuln_index].package
-		if vuln.fix_version != "" {
+	// Convert the harbor report vulnerabilities to the standardized format
+	for _, vulnItem := range report.Vulnerabilities {
+		// Only include vulnerabilities that have a fix version available
+		if vulnItem.FixVersion != "" {
 			updates.Updates = append(updates.Updates, v1alpha1.UpdatePackage{
-				Name: pkg_name,
-				InstalledVersion: vuln.version,
-				FixedVersion: vuln.fix_version,
-				VulnerabilityID: vuln.id
+				Name:             vulnItem.Package,
+				InstalledVersion: vulnItem.Version,
+				FixedVersion:     vulnItem.FixVersion,
+				VulnerabilityID:  vulnItem.ID,
 			})
 		}
 	}
