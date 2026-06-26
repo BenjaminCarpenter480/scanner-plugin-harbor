@@ -1,6 +1,6 @@
-# 🏭 Copacetic Scanner Plugin Template
+# 🏭 Copacetic Scanner Plugin for Harbor
 
-This is a template repo for creating a scanner plugin for [Copacetic](https://github.com/project-copacetic/copacetic).
+This is a fork of the template repo for creating a harbor scanner plugin for [Copacetic](https://github.com/project-copacetic/copacetic).
 
 Learn more about Copacetic's scanner plugins [here](https://project-copacetic.github.io/copacetic/scanner-plugins).
 
@@ -8,12 +8,13 @@ Learn more about Copacetic's scanner plugins [here](https://project-copacetic.gi
 
 These instructions are for developing a new scanner plugin for [Copacetic](https://github.com/project-copacetic/copacetic) from this template.
 
-1. Clone this repo
-2. Rename the `scanner-plugin-template` repo to the name of your plugin
-3. Update applicable types for [`harborReport`](types.go) to match your scanner's structure
-4. Update [`parse`](main.go) to parse your scanner's report format accordingly
-5. Update `CLI_BINARY` in the [`Makefile`](Makefile) to match your scanner's CLI binary name (resulting binary must be prefixed with `copa-`)
-5. Update this [`README.md`](README.md) to match your plugin's usage
+- [x] Clone this repo
+- [x] Rename the `scanner-plugin-template` repo to the name of your plugin
+- [x] Update applicable types for [`harborReport`](types.go) to match your scanner's structure
+- [x] Update [`parse`](main.go) to parse your scanner's report format accordingly
+- [x] Update `CLI_BINARY` in the [`Makefile`](Makefile) to match your scanner's CLI binary name (resulting binary must be prefixed with `copa-`)
+- [] Update this [`README.md`](README.md) to match your plugin's usage
+- [ ] Test plugin outwith go test framework (e.g. with `copa patch` and a report file)
 
 ## Development Pre-requisites
 
