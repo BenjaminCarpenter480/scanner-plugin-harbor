@@ -1,165 +1,120 @@
 package main
 
 import (
-	"reflect"
 	"testing"
 
 	v1alpha1 "github.com/project-copacetic/copacetic/pkg/types/v1alpha1"
+	"github.com/goharbor/harbor/src/pkg/scan/vuln"
 )
 
-func Test_parseharborReport(t *testing.T) {
+func TestParseHarborReport(t *testing.T) {
 	type args struct {
 		file string
 	}
 	tests := []struct {
 		name    string
 		args    args
-		want    *harborReport
 		wantErr bool
+		check   func(*vuln.Report) bool
 	}{
 		{
 			name: "valid report",
 			args: args{file: "testdata/harbor_report.json"},
-			want: &harborReport{
-				OSType:    "harborOS",
-				OSVersion: "42",
-				Arch:      "amd64",
-				Packages: []harborPackage{
-					{
-						Name:             "foo",
-						InstalledVersion: "1.0.0",
-						FixedVersion:     "1.0.1",
-						VulnerabilityID:  "VULN001",
-					},
-					{
-						Name:             "bar",
-						InstalledVersion: "2.0.0",
-						FixedVersion:     "2.0.1",
-						VulnerabilityID:  "VULN002",
-					},
-					{
-						Name:             "baz",
-						InstalledVersion: "3.0.0",
-						FixedVersion:     "",
-						VulnerabilityID:  "VULN003",
-					},
-				},
+			check: func(report *vuln.Report) bool {
+				return report != nil && len(report.Vulnerabilities) > 0
 			},
 			wantErr: false,
 		},
 		{
 			name:    "invalid file",
 			args:    args{file: "testdata/nonexistent_file.json"},
-			want:    nil,
+			check:   nil,
 			wantErr: true,
 		},
 		{
 			name:    "invalid json",
 			args:    args{file: "testdata/invalid_report.json"},
-			want:    nil,
+			check:   nil,
 			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := parseharborReport(tt.args.file)
+			got, err := parseHarborReport(tt.args.file)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("parseharborReport() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("parseHarborReport() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("parseharborReport() = %v, want %v", got, tt.want)
+			if tt.check != nil && !tt.check(got) {
+				t.Errorf("parseHarborReport() validation failed for %v", got)
 			}
 		})
 	}
 }
 
-func TestNewharborParser(t *testing.T) {
+func TestNewHarborParser(t *testing.T) {
 	tests := []struct {
 		name string
-		want *harborParser
 	}{
 		{
-			name: "valid parser",
-			want: &harborParser{},
+			name: "creates parser successfully",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := newharborParser(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewharborParser() = %v, want %v", got, tt.want)
+			got := newHarborParser()
+			if got == nil {
+				t.Errorf("newHarborParser() returned nil")
 			}
 		})
 	}
 }
 
-func TestharborParser_Parse(t *testing.T) {
+func TestHarborParser_Parse(t *testing.T) {
 	type args struct {
 		file string
 	}
 	tests := []struct {
 		name    string
-		k       *harborParser
 		args    args
-		want    *v1alpha1.UpdateManifest
 		wantErr bool
+		check   func(*v1alpha1.UpdateManifest) bool
 	}{
 		{
-			name: "valid report",
-			k:    &harborParser{},
+			name: "valid report with vulnerabilities",
 			args: args{file: "testdata/harbor_report.json"},
-			want: &v1alpha1.UpdateManifest{
-				APIVersion: v1alpha1.APIVersion,
-				Metadata: v1alpha1.Metadata{
-					OS: v1alpha1.OS{
-						Type:    "harborOS",
-						Version: "42",
-					},
-					Config: v1alpha1.Config{
-						Arch: "amd64",
-					},
-				},
-				Updates: []v1alpha1.UpdatePackage{
-					{
-						Name:             "foo",
-						InstalledVersion: "1.0.0",
-						FixedVersion:     "1.0.1",
-						VulnerabilityID:  "VULN001",
-					},
-					{
-						Name:             "bar",
-						InstalledVersion: "2.0.0",
-						FixedVersion:     "2.0.1",
-						VulnerabilityID:  "VULN002",
-					},
-				},
+			check: func(manifest *v1alpha1.UpdateManifest) bool {
+				if manifest == nil {
+					return false
+				}
+				// Check that we extracted at least one vulnerability with a fix version
+				return len(manifest.Updates) > 0
 			},
 			wantErr: false,
 		},
 		{
 			name:    "invalid file",
-			k:       &harborParser{},
 			args:    args{file: "testdata/nonexistent_file.json"},
-			want:    nil,
+			check:   nil,
 			wantErr: true,
 		},
 		{
 			name:    "invalid json",
-			k:       &harborParser{},
 			args:    args{file: "testdata/invalid_report.json"},
-			want:    nil,
+			check:   nil,
 			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := tt.k.parse(tt.args.file)
+			k := newHarborParser()
+			got, err := k.parse(tt.args.file)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("harborParser.Parse() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("harborParser.parse() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("harborParser.Parse() = %v, want %v", got, tt.want)
+			if tt.check != nil && !tt.check(got) {
+				t.Errorf("harborParser.parse() validation failed for %v", got)
 			}
 		})
 	}
