@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	v1alpha1 "github.com/project-copacetic/copacetic/pkg/types/v1alpha1"
 	"github.com/goharbor/harbor/src/pkg/scan/vuln"
+	v1alpha1 "github.com/project-copacetic/copacetic/pkg/types/v1alpha1"
 )
 
 // HarborReportEnvelope wraps the vuln.Report in the API envelope format,
@@ -48,7 +48,7 @@ func (k *HarborParser) parse(file string) (*v1alpha1.UpdateManifest, error) {
 		return nil, err
 	}
 
-	if report.Vulnerabilities == nil || len(report.Vulnerabilities) == 0 {
+	if len(report.Vulnerabilities) == 0 {
 		return nil, fmt.Errorf("no vulnerabilities found in the report or report is not in the expected format")
 	}
 
